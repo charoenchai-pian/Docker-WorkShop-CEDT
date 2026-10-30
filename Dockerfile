@@ -13,6 +13,8 @@ WORKDIR /app
 # TODO(step-4b): copy package.json and package-lock.json, then install deps.
 COPY app/package.json app/package-lock.json ./
 RUN npm ci --omit=dev
+# Bump transitive proxy-addr to the patched 2.0.8 (CVE flagged by Trivy).
+RUN npm update proxy-addr --omit=dev
 
 # TODO(step-4c): copy the rest of the app source into /app.
 COPY app/ ./
@@ -23,6 +25,10 @@ COPY app/ ./
 
 # TODO(step-4d): set the runtime base image (same tag as step-4a for consistency).
 FROM node:20.11-slim
+
+# Patch OS packages and drop npm (not needed at runtime; its bundled deps carry CVEs).
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 WORKDIR /app
 
